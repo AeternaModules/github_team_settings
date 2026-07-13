@@ -20,13 +20,14 @@ EOT
       notify       = optional(bool)
     }))
   }))
-  # --- Unconfirmed validation candidates, derived from github_team_settings's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: review_request_delegation.algorithm
-  #   source:    validation.StringInSlice value list is not a literal []string - likely a generated PossibleValuesFor*() helper; resolve separately
-  # path: review_request_delegation.member_count
-  #   source:    validation.All(...) - no translation rule yet, add one
+  validation {
+    condition = alltrue([
+      for k, v in var.team_settingses : (
+        v.review_request_delegation == null || (v.review_request_delegation.member_count == null || ((v.review_request_delegation.member_count >= 1)))
+      )
+    ])
+    error_message = "all of: must be at least 1"
+  }
+  # Note: 1 additional provider-side validator is enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
